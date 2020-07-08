@@ -51,7 +51,6 @@ int main(int argc, char const *argv[])
     int max_depth = 6;
     float field_of_view = 30;
     Vec3<float> background_color(0.69f,0.69f,0.69f);
-    std::string filename = "test.ppm";
     Render render(max_depth,
              rendered_image_width,
              rendered_image_height,
