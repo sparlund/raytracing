@@ -13,7 +13,6 @@ private:
     Vec3<float> background_color;
     std::string filename;
     // let the render class remember how many spheres we have
-    std::vector<Sphere> spheres;
     // 3 values per pixel
     // a vec3<float> array the size of the image
     std::vector<Vec3<float>> image_vector;
@@ -22,7 +21,10 @@ private:
     
      
 public:
+    bool export_image(std::string filename);
+    std::vector<Sphere> spheres;
     std::vector<unsigned char> pixels;
+    float render_time=0;
     // method to add spheres
     void render();
     float mix_colors(float a, float b,float mix);
@@ -30,6 +32,10 @@ public:
                       const Vec3<float>& ray_direction,
                       const int& current_depth);
     void add_sphere(Vec3<float> position,float radius,Vec3<float> color,float reflectivity,float transparency,Vec3<float>  emission_color);
+    void add_random_sphere();
+    void remove_sphere(unsigned int index);
+    void remove_sphere();
+
     Render(int max_depth,
            int width,
            int height,

@@ -1,12 +1,52 @@
 #include <fstream>
 #include <string>
 #include <cmath>
+#include <ctime>
 #include <iostream>
 #include <stdlib.h>
 #include "Vec3.h"
 #include "Render.h"
 
+bool Render::export_image(std::string filename){
+    std::ofstream output_stream(filename);
+    output_stream << "P6\n" << width << " " << height << "\n255\n";
+    for (unsigned int i = 0; i < (this->width * this->height); ++i){
+        unsigned char r = (unsigned char)(std::min(float(1), image_vector.at(i).x) * 255);
+        unsigned char g = (unsigned char)(std::min(float(1), image_vector.at(i).y) * 255);
+        unsigned char b = (unsigned char)(std::min(float(1), image_vector.at(i).z) * 255);
+        output_stream << r << g << b;         
+    } 
+    output_stream.close(); 
+
+};
+
+void Render::add_random_sphere(){
+    srand( (unsigned)time(NULL) );
+    const float x = -10 + (rand() % (10-(-10) + 1));
+    const float y = -10 + (rand() % (10-(-10) + 1));
+    const float z = -100 + (rand() % (-200-(-100) + 1));
+    const float radius = rand() % 1;
+    // divide result my RAND_MAX to get number in range 0-1
+    const float r = rand()/float(RAND_MAX);
+    const float g = rand()/float(RAND_MAX);
+    const float b = rand()/float(RAND_MAX);
+    const float reflectivity = rand()/float(RAND_MAX);
+    this->add_sphere(Vec3<float>(x,y,z),     4, Vec3<float>(r,g,b), 0, reflectivity, Vec3<float>(0.0f,0.0f,0.0f));
+};
+
+void Render::remove_sphere(unsigned int index){
+    if (index <= this->spheres.size())
+    {
+        this->spheres.erase(this->spheres.begin() + index);
+    }
+    
+};
+void Render::remove_sphere(){
+    this->spheres.pop_back();
+};
+
 void Render::render(){
+
     unsigned int current_pixel = 0;
     float invWidth = 1 / float(width);
     float invHeight = 1 / float(height); 
@@ -14,13 +54,19 @@ void Render::render(){
     aspect_ratio = (float)width / (float)height;
     angle = tan(M_PI * 0.5 * field_of_view / 180.);
     const Vec3<float> zero_vector = Vec3<float>(0.0,0.0,0.0);
+    // empty image_vector as we are making a new image!
+    this->image_vector.clear();
+    std::clock_t timer;
+    timer = std::clock();
     for (unsigned int y = 0; y < this->height; ++y)
     {
         for (unsigned int x = 0; x < this->width; ++x)
         {
-            float xx = (2 * ((x + 0.5) * invWidth) - 1) * angle * aspect_ratio; 
-            float yy = (1 - 2 * ((y + 0.5) * invHeight)) * angle; 
-            Vec3<float> ray_direction(xx, yy, -1); 
+            // ray direction in camera space
+            float x_ray_dir = (2 * ((x + 0.5) * invWidth) - 1) * angle * aspect_ratio; 
+            float y_ray_dir = (1 - 2 * ((y + 0.5) * invHeight)) * angle; 
+            // z-dir of ray is always -1
+            Vec3<float> ray_direction(x_ray_dir, y_ray_dir, -1); 
             // normalize vector
             ray_direction.normalize(); 
             Vec3<float> pixel = trace(zero_vector, ray_direction,0);
@@ -29,19 +75,18 @@ void Render::render(){
             current_pixel++;
         }
     }
-    // create file stream and output
-    std::ofstream output_stream(filename);
-    output_stream << "P6\n" << width << " " << height << "\n255\n";
+    render_time = ( std::clock() - timer ) / (float) CLOCKS_PER_SEC;
+    // Clear pixel vector and re-allocate it's size
+    this->pixels.clear();
+    this->pixels.reserve(width*height*3);
     for (unsigned int i = 0; i < (width * height); ++i){
         unsigned char r = (unsigned char)(std::min(float(1), image_vector.at(i).x) * 255);
         unsigned char g = (unsigned char)(std::min(float(1), image_vector.at(i).y) * 255);
         unsigned char b = (unsigned char)(std::min(float(1), image_vector.at(i).z) * 255);
-        output_stream << r << g << b;         
         this->pixels.push_back(r);
         this->pixels.push_back(g);
         this->pixels.push_back(b);
     } 
-    output_stream.close(); 
     return;
 };
 float Render::mix_colors(float a, float b,float mix){
@@ -84,10 +129,7 @@ Vec3<float> Render::trace(const Vec3<float>& ray_origin,
     Vec3<float> point_of_intersection = ray_origin + ray_direction * distance_nearest_sphere; 
     Vec3<float> normal_at_point_of_intersection = point_of_intersection - hit_sphere->center; 
     // normalize
-    // std::cout << point_of_intersection.x << "," << point_of_intersection.y << "," << point_of_intersection.z << "\n";
-    // std::cout << normal_at_point_of_intersection.x << "," << normal_at_point_of_intersection.y << "," << normal_at_point_of_intersection.z << "\n";
     normal_at_point_of_intersection.normalize();
-    // std::cout << normal_at_point_of_intersection.x << "," << normal_at_point_of_intersection.y << "," << normal_at_point_of_intersection.z << "\n";
     float bias = 1e-4;
     bool inside_sphere = false; 
     if (ray_direction.dot(normal_at_point_of_intersection) > 0){

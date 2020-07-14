@@ -1,10 +1,12 @@
+#include "src/imgui/imgui.h"
+#include "src/imgui/imgui_impl_glfw.h"
+#include "src/imgui/imgui_impl_opengl3.h"
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <string>
 #include <iostream>
 #include <vector>
 #include <stdlib.h>
-#include <ctime>
 #include "src/Vec3.h"
 #include "src/Sphere.h"
 #include "src/Render.h"
@@ -50,35 +52,19 @@ int main(int argc, char const *argv[])
     unsigned int rendered_image_height  = 480;
     int max_depth = 6;
     float field_of_view = 30;
+    std::string filename = "test.ppm";
     Vec3<float> background_color(0.69f,0.69f,0.69f);
-    Render render(max_depth,
+    Render r(max_depth,
              rendered_image_width,
              rendered_image_height,
              field_of_view,
              filename,
              background_color);
-    // Vec3<float> position,float radius,Vec3<float> color,float reflectivity,float transparency,Vec3<float>  emission_color
-    // add sphere to image
-    const unsigned int number_of_sphere = 5;
-    srand( (unsigned)time(NULL) );
-    for (int i = 0; i < number_of_sphere; ++i)
-    {
-        const float x = -10 + (rand() % (10-(-10) + 1));
-        const float y = -10 + (rand() % (10-(-10) + 1));
-        const float z = -100 + (rand() % (-200-(-100) + 1));
-        const float radius = rand() % 1;
-        const float r = rand()/float(RAND_MAX);
-        const float g = rand()/float(RAND_MAX);
-        const float b = rand()/float(RAND_MAX);
-        render.add_sphere(Vec3<float>(x,y,z),     4, Vec3<float>(r,g,b), 0, 0.5, Vec3<float>(0.0f,0.0f,0.0f));
-        // exit(1);
-    }
-    // r.add_sphere(Vec3<float>(-5.5,      0, -15-20),     3, Vec3<float>(0.90, 0.90, 0.90), 0, 0.0, Vec3<float>(0.0f,0.0f,0.0f));
     // add light
-    render.add_sphere(Vec3<float>( 0.0,     20, -30-20),     3, Vec3<float>(0.00, 0.00, 0.00), 0, 0.0, Vec3<float>(3.0f,3.0f,3.0f));
-    render.render(); 
+    r.add_sphere(Vec3<float>( 0.0,     20, -30-20),     3, Vec3<float>(0.00, 0.00, 0.00), 0, 0.0, Vec3<float>(3.0f,3.0f,3.0f));
+    r.render(); 
     // vertices for our texture will always be the same as we always want a "fullscreen" view of the rendered image
-                        // positions
+    // positions
     float vertices[] = {
         // positions          // texture coords
          1.0f,  1.0f, 0.0f,   1.0f, 1.0f, // top right
@@ -115,12 +101,22 @@ int main(int argc, char const *argv[])
     glBindTexture(GL_TEXTURE_2D, texture);
     glPixelStorei(GL_UNPACK_ALIGNMENT,1);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    // Read the texture data from file and upload it to the GPU
-    
-
-    glTexImage2D(GL_TEXTURE_2D, 0,GL_RGB, rendered_image_width, rendered_image_height, 0,GL_RGB, GL_UNSIGNED_BYTE, (GLvoid*)&render.pixels.front());
+    glTexImage2D(GL_TEXTURE_2D, 0,GL_RGB, rendered_image_width, rendered_image_height, 0,GL_RGB, GL_UNSIGNED_BYTE, (GLvoid*)&r.pixels.front());
     // glGenerateMipmap(GL_TEXTURE_2D);
     glViewport(0,0,window_width,window_height);
+
+    // GUI
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGuiIO &io = ImGui::GetIO();
+    ImGui_ImplGlfw_InitForOpenGL(window, true);
+    const char *glsl_version = "#version 330";
+    ImGui_ImplOpenGL3_Init(glsl_version);
+    // Setup Dear ImGui style
+    ImGui::StyleColorsDark();
+    // Change font
+    io.Fonts->AddFontFromFileTTF("src/Roboto-Regular.ttf", 16);
+    
 
     shader_rendered_image.use();
     shader_rendered_image.setInt("texture", 0);
@@ -130,23 +126,66 @@ int main(int argc, char const *argv[])
         {
             glfwSetWindowShouldClose(window, GL_TRUE);
         }
-        glClearColor(0.3f, 0.0f, 0.0f, 1.0f);
+        ImGui_ImplOpenGL3_NewFrame();
+        ImGui_ImplGlfw_NewFrame();
+        ImGui::NewFrame();
+        glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
         glBindTexture(GL_TEXTURE_2D, texture);
         glActiveTexture(GL_TEXTURE0);
         glBindVertexArray(VAO);
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+        if (ImGui::BeginMainMenuBar()){
+            if (ImGui::BeginMenu("Change render method")){
+                
+            }   
+            if (ImGui::BeginMenu("Export")){
+                }   
+            if (ImGui::BeginMenu("Edit scene")){
+                }   
+
+
+        ImGui::EndMainMenuBar();
+        }
+        ImGui::Begin("Add sphere");
+            if (ImGui::Button(":)"))
+            {
+                std::cout << r.pixels.size() << "\n";
+                r.add_random_sphere();
+                r.render();
+                r.export_image("test.ppm");
+                glBindTexture(GL_TEXTURE_2D, texture);
+                glPixelStorei(GL_UNPACK_ALIGNMENT,1);
+                glTexSubImage2D(GL_TEXTURE_2D,
+                                0,
+                                0,
+                                0,
+                                rendered_image_width,
+                                rendered_image_height,
+                                GL_RGB,
+                                GL_UNSIGNED_BYTE,
+                                (GLvoid*)&r.pixels.front());
+            }
+            ImGui::End();
+        const float DISTANCE = 10.0f;
+        ImVec2 window_pos = ImVec2(DISTANCE, io.DisplaySize.y - 110);
+        ImVec2 window_pos_pivot = ImVec2(0.0f, 0.0f);
+        ImGui::SetNextWindowPos(window_pos, ImGuiCond_Always, window_pos_pivot);
+        ImGui::SetNextWindowBgAlpha(0.6f); // Transparent background
+        ImGui::Begin("overlay",NULL, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNav);
+        ImGui::Text("viewer_ray_tracer");
+        ImGui::Separator();
+        std::string temp = "Render time: "+ std::to_string(r.render_time).substr(0,4)+"s";
+        ImGui::Text(temp.c_str());
+        ImGui::End();
+        ImGui::Render();
+        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
         glfwSwapBuffers(window);
     }
     glDeleteVertexArrays(1, &VAO);
     glDeleteBuffers(1, &VBO);
     glDeleteBuffers(1, &EBO);
     glfwTerminate();
-    // std::clock_t timer;
-    // float duration;
-    // timer = std::clock();
-    // duration = ( std::clock() - timer ) / (float) CLOCKS_PER_SEC;
-    // std::cout<< duration <<'\n';
     return 0;
 }
 
