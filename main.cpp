@@ -31,7 +31,7 @@ int main(int argc, char const *argv[])
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     glfwWindowHint(GLFW_SAMPLES, 4);
-    GLFWwindow *window = glfwCreateWindow(window_width, window_height, "ray_tracer", NULL, NULL);
+    GLFWwindow *window = glfwCreateWindow(window_width, window_height, " ", NULL, NULL);
     if (window == NULL)
         {
             glfwTerminate();
@@ -150,10 +150,8 @@ int main(int argc, char const *argv[])
         ImGui::Begin("Add sphere");
             if (ImGui::Button(":)"))
             {
-                std::cout << r.pixels.size() << "\n";
-                r.add_random_sphere();
+                r.add_random_triangle(); 
                 r.render();
-                r.export_image("test.ppm");
                 glBindTexture(GL_TEXTURE_2D, texture);
                 glPixelStorei(GL_UNPACK_ALIGNMENT,1);
                 glTexSubImage2D(GL_TEXTURE_2D,

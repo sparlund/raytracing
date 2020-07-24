@@ -3,8 +3,7 @@
 
 bool Sphere::compute_intersection(const Vec3<float>& origin,
                                   const Vec3<float>& direction,
-                                  float& t0,
-                                  float& t1)const{
+                                  float& t)const{
 
     // vector from center of sphere to ray origin
     Vec3<float> length = this->center - origin;
@@ -20,8 +19,7 @@ bool Sphere::compute_intersection(const Vec3<float>& origin,
     {
         return false;
     }
-    float t = std::sqrt(this->radius_squared - distance);
-    t0 = dot_length_ray - t;
-    t1 = dot_length_ray + t;
+    float tt = std::sqrt(this->radius_squared - distance);
+    t = dot_length_ray + tt;
     return true;
 };

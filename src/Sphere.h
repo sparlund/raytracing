@@ -1,12 +1,13 @@
+#include "Object.h"
 #include "Vec3.h"
 #ifndef SPHERE_H
 #define SPHERE_H
-class Sphere
+class Sphere:public Object
 {
 public:
     float radius, radius_squared, transparency, reflection;
     Vec3<float> center, color, emission_color;
-    bool compute_intersection(const Vec3<float>& origin,const Vec3<float>& direction,float& t0, float& t1)const;
+    bool compute_intersection(const Vec3<float>& origin,const Vec3<float>& direction, float& t)const;
     Vec3<float> get_center(){return this->center;};
     // constructor only assigns some private variables..
     Sphere(Vec3<float> center,

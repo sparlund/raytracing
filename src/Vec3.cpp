@@ -3,6 +3,10 @@
 
 // overload some operators..
 template<class T>
+Vec3<T> Vec3<T>::operator/=(const T& t) const{
+    return Vec3<T>(x/t,y/t,z/t);
+};
+template<class T>
 Vec3<T> Vec3<T>::operator+(const Vec3<T> t) const{
     return Vec3<T>(x+t.x,y+t.y,z+t.z);
 };
@@ -28,6 +32,14 @@ T Vec3<T>::dot(const Vec3<T> second_vector) const{
     // dot component returns a scalar
     return x*second_vector.x + y*second_vector.y + z*second_vector.z;
 };
+// cross product
+template<class T>
+Vec3<T> Vec3<T>::cross(const Vec3<T> second_vector) const{
+    return Vec3<T>(y * second_vector.z - z * second_vector.y,
+                   z * second_vector.x - x * second_vector.z,
+                   x * second_vector.y - y * second_vector.x);
+};
+
 
 template<class T>
 Vec3<T>& Vec3<T>::normalize() 
